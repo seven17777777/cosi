@@ -50,25 +50,9 @@ type Config struct {
 
 // NewS3Agent returns a new s3 agent
 func NewS3Agent(cfg Config) (*S3Agent, error) {
-	// Validate endpoint
-	if cfg.Endpoint == "" {
-		return nil, fmt.Errorf("endpoint is empty")
-	}
-
-	// Check endpoint format, endpoint format likes 'https://x.xx.xx.xx:443'.
-	_, err := url.Parse(cfg.Endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("url parse endpoint [%s] failed, error is [%v]", cfg.Endpoint, err)
-	}
-
-	// Validate access key
-	if cfg.AccessKey == "" {
-		return nil, fmt.Errorf("access key is empty")
-	}
-
-	// Validate secret key
-	if cfg.SecretKey == "" {
-		return nil, fmt.Errorf("secret key is empty")
+	// Validate config fields
+	if err := validateConfig(cfg); err != nil {
+		return nil, err
 	}
 
 	tlsConfig, err := utils.BuildTLSConfig(cfg.RootCA)
@@ -101,4 +85,25 @@ func NewS3Agent(cfg Config) (*S3Agent, error) {
 	return &S3Agent{
 		Client: s3.New(s),
 	}, nil
+}
+
+// validateConfig validates required fields in the Config struct
+func validateConfig(cfg Config) error {
+	if cfg.Endpoint == "" {
+		return fmt.Errorf("endpoint is empty")
+	}
+
+	if _, err := url.Parse(cfg.Endpoint); err != nil {
+		return fmt.Errorf("url parse endpoint [%s] failed, error is [%v]", cfg.Endpoint, err)
+	}
+
+	if cfg.AccessKey == "" {
+		return fmt.Errorf("access key is empty")
+	}
+
+	if cfg.SecretKey == "" {
+		return fmt.Errorf("secret key is empty")
+	}
+
+	return nil
 }
